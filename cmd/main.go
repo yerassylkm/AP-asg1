@@ -2,11 +2,15 @@ package main
 
 import (
 	"log"
+	"net"
+	"os"
+	
 	"payment-service/internal/repository"
-	"payment-service/internal/transport/http"
 	"payment-service/internal/usecase"
-
-	"github.com/gin-gonic/gin"
+	grpcHandler "payment-service/internal/transport/grpc"
+	
+	pb "github.com/yerassylkm/AP-asg2_generated"
+	"google.golang.org/grpc"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -19,13 +23,23 @@ func main() {
 
 	repo := repository.NewPostgresRepo(db)
 	uc := usecase.NewPaymentUseCase(repo)
-	handler := http.NewPaymentHandler(uc)
 
-	r := gin.Default()
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "50051" 
+	}
+
+	lis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+	pb.RegisterPaymentServiceServer(s, grpcHandler.NewPaymentGRPCHandler(uc))
+
+	log.Printf("gRPC Payment Service started on :%s", grpcPort)
 	
-	r.POST("/payments", handler.CreatePayment)   
-	r.GET("/payments/:order_id", handler.GetPayment) 
-
-	log.Println("Payment Service started on :8081")
-	r.Run(":8081")
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
