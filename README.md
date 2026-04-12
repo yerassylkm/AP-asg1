@@ -1,3 +1,4 @@
+```mermaid
 graph TD
     Client[Postman / Client] -- HTTP/JSON (Port 8080) --> OrderService[Order Service]
     
@@ -7,3 +8,4 @@ graph TD
 
     OrderService -- SQL --> OrderDB[(PostgreSQL: order_db)]
     PaymentService -- SQL --> PaymentDB[(PostgreSQL: payment_db)]
+```
