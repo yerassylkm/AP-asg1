@@ -7,12 +7,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.1
+	github.com/rabbitmq/amqp091-go v1.10.0
 )
 
-require (
-	github.com/golang/protobuf v1.5.4 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
-)
+require google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
@@ -45,5 +43,5 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
