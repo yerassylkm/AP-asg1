@@ -26,42 +26,12 @@ func NewRabbitPublisher(url string) (domain.EventPublisher, error) {
 		return nil, err
 	}
 
-	// Declare dead letter exchange
 	err = ch.ExchangeDeclare(
-		"payment.dlx", // name
-		"direct",      // type
-		true,          // durable
-		false,         // auto-deleted
-		false,         // internal
-		false,         // no-wait
-		nil,           // arguments
-	)
-	if err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
-
-	// Declare dead letter queue
-	_, err = ch.QueueDeclare(
-		"payment.dlq", // name
-		true,          // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
-	)
-	if err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
-
-	// Bind DLQ to DLX
-	err = ch.QueueBind(
-		"payment.dlq", // queue name
-		"failed",      // routing key
-		"payment.dlx", // exchange
+		"payment.dlx",
+		"direct",
+		true,
+		false,
+		false,
 		false,
 		nil,
 	)
@@ -71,18 +41,44 @@ func NewRabbitPublisher(url string) (domain.EventPublisher, error) {
 		return nil, err
 	}
 
-	// Declare main queue with DLX
+	_, err = ch.QueueDeclare(
+		"payment.dlq",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		ch.Close()
+		conn.Close()
+		return nil, err
+	}
+
+	err = ch.QueueBind(
+		"payment.dlq",
+		"failed",
+		"payment.dlx",
+		false,
+		nil,
+	)
+	if err != nil {
+		ch.Close()
+		conn.Close()
+		return nil, err
+	}
+
 	args := amqp091.Table{
 		"x-dead-letter-exchange":    "payment.dlx",
 		"x-dead-letter-routing-key": "failed",
 	}
 	_, err = ch.QueueDeclare(
-		"payment.completed", // name
-		true,                // durable
-		false,               // delete when unused
-		false,               // exclusive
-		false,               // no-wait
-		args,                // arguments
+		"payment.completed",
+		true,
+		false,
+		false,
+		false,
+		args,
 	)
 	if err != nil {
 		ch.Close()
@@ -100,10 +96,10 @@ func (p *rabbitPublisher) PublishPaymentEvent(ctx context.Context, event domain.
 	}
 
 	err = p.ch.PublishWithContext(ctx,
-		"",                  // exchange
-		"payment.completed", // routing key
-		false,               // mandatory
-		false,               // immediate
+		"",
+		"payment.completed",
+		false,
+		false,
 		amqp091.Publishing{
 			ContentType: "application/json",
 			Body:        body,
