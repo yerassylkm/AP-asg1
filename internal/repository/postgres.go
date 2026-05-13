@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"payment-service/internal/domain"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -15,8 +16,8 @@ func NewPostgresRepo(db *sqlx.DB) domain.PaymentRepository {
 }
 
 func (r *postgresRepo) Create(ctx context.Context, p *domain.Payment) error {
-	query := `INSERT INTO payments (id, order_id, transaction_id, amount, status) 
-			  VALUES (:id, :order_id, :transaction_id, :amount, :status)`
+	query := `INSERT INTO payments (id, order_id, transaction_id, amount, status, customer_email) 
+              VALUES (:id, :order_id, :transaction_id, :amount, :status, :customer_email)`
 	_, err := r.db.NamedExecContext(ctx, query, p)
 	return err
 }

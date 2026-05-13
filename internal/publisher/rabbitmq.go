@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"payment-service/internal/domain"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -15,7 +17,16 @@ type rabbitPublisher struct {
 }
 
 func NewRabbitPublisher(url string) (domain.EventPublisher, error) {
-	conn, err := amqp091.Dial(url)
+	var conn *amqp091.Connection
+	var err error
+	for i := 0; i < 5; i++ {
+		conn, err = amqp091.Dial(url)
+		if err == nil {
+			break
+		}
+		log.Printf("RabbitMQ connect attempt %d failed: %v", i+1, err)
+		time.Sleep(2 * time.Second)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +114,7 @@ func (p *rabbitPublisher) PublishPaymentEvent(ctx context.Context, event domain.
 		amqp091.Publishing{
 			ContentType: "application/json",
 			Body:        body,
+			MessageId:   uuid.New().String(),
 		})
 	if err != nil {
 		log.Printf("Failed to publish event: %v", err)
